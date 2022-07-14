@@ -18,3 +18,5 @@ Repository to learn all kind of AWS stuff.
 - Cloudwatch with cron job for automatic stop/enables?
 - Find a book about AWS or roadmap
 - Load balancer?
+- S3!
+- Route 53?
