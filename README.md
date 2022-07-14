@@ -17,3 +17,4 @@ Repository to learn all kind of AWS stuff.
 - Auto scaling group ?
 - Cloudwatch with cron job for automatic stop/enables?
 - Find a book about AWS or roadmap
+- Load balancer?
