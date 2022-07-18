@@ -1,9 +1,9 @@
 # resource aws_db_parameter_group custom_mariadb_10_2 {
 #   name        = "custom-mariadb-10-2"
 #   family      = "mariadb10.2"
-#   description = "Custom MariaDB tailored as a base for all Weezevent MariaDB RDS"
+#   description = "Custom MariaDB tailored as a base for all MariaDB RDS"
 
-#   # default sql_mode is STRICT and cause problem on Weezevent
+#   # default sql_mode is STRICT and cause problem
 #   parameter {
 #     name  = "sql_mode"
 #     value = "NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
@@ -13,9 +13,9 @@
 # resource aws_db_parameter_group custom_mariadb_10_3 {
 #   name        = "custom-mariadb-10-3"
 #   family      = "mariadb10.3"
-#   description = "Custom MariaDB tailored as a base for all Weezevent MariaDB RDS"
+#   description = "Custom MariaDB tailored as a base for all MariaDB RDS"
 
-#   # default sql_mode is STRICT and cause problem on Weezevent
+#   # default sql_mode is STRICT and cause problem
 #   parameter {
 #     name  = "sql_mode"
 #     value = "NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
@@ -25,9 +25,9 @@
 # resource aws_db_parameter_group custom_mariadb_10_4 {
 #   name        = "custom-mariadb-10-4"
 #   family      = "mariadb10.4"
-#   description = "Custom MariaDB tailored as a base for all Weezevent MariaDB RDS"
+#   description = "Custom MariaDB tailored as a base for all MariaDB RDS"
 
-#   # default sql_mode is STRICT and cause problem on Weezevent
+#   # default sql_mode is STRICT and cause problem
 #   parameter {
 #     name  = "sql_mode"
 #     value = "NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
@@ -37,9 +37,9 @@
 # resource aws_db_parameter_group custom_mariadb_10_5 {
 #   name        = "custom-mariadb-10-5"
 #   family      = "mariadb10.5"
-#   description = "Custom MariaDB tailored as a base for all Weezevent MariaDB RDS"
+#   description = "Custom MariaDB tailored as a base for all MariaDB RDS"
 
-#   # default sql_mode is STRICT and cause problem on Weezevent
+#   # default sql_mode is STRICT and cause problem
 #   parameter {
 #     name  = "sql_mode"
 #     value = "NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
@@ -91,7 +91,7 @@
 resource aws_db_parameter_group custom_postgres_13 {
   name        = "custom-postgres-13"
   family      = "postgres13"
-  description = "Custom Postgres 13 tailored as a base for all Weezevent postgres RDS"
+  description = "Custom Postgres 13 tailored as a base for all postgres RDS"
 
   # I believe it's settings we have got problem with
   parameter {
@@ -127,12 +127,25 @@ resource aws_db_parameter_group custom_postgres_13 {
     name  = "log_min_error_statement"
     value = "panic"
   }
+
+  # DATADOG integration START
+  parameter {
+    name  = "shared_preload_libraries"
+    value = "pg_stat_statements"
+  }
+
+  parameter {
+    name  = "track_activity_query_size"
+    value = "pg_stat_statements"
+  }
+
+  # DATADOG integration END section
 }
 
 # resource aws_db_parameter_group custom_postgres_12 {
 #   name        = "custom-postgres-12"
 #   family      = "postgres12"
-#   description = "Custom Postgres 12 tailored as a base for all Weezevent postgres RDS"
+#   description = "Custom Postgres 12 tailored as a base for all postgres RDS"
 
 #   # I believe it's settings we have got problem with
 #   parameter {
@@ -173,7 +186,7 @@ resource aws_db_parameter_group custom_postgres_13 {
 # resource aws_db_parameter_group custom_postgres_11 {
 #   name        = "custom-postgres-11"
 #   family      = "postgres11"
-#   description = "Custom Postgres 11 tailored as a base for all Weezevent postgres RDS"
+#   description = "Custom Postgres 11 tailored as a base for all postgres RDS"
 
 #   # I believe it's settings we have got problem with
 #   parameter {

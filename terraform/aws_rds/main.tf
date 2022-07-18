@@ -9,8 +9,8 @@ terraform {
 
 locals {
   ssh_key_name = "example-key"
-  aws_region = "us-east-1"
-  aws_availability_zone = "us-east-1a"
+  aws_region = var.AWS_REGION
+  aws_availability_zone = "${var.AWS_REGION}a"
 }
 
 provider "aws" {
