@@ -20,11 +20,6 @@ provider "aws" {
   secret_key = var.AWS_SECRET_ACCESS_KEY
 }
 
-# resource "aws_key_pair" "example" {
-#   key_name   = local.ssh_key_name
-#   public_key = var.SSH_PUBLIC_KEY
-# }
-
 resource "aws_security_group" "web_server_sg" {
   name = "terraform_web_server_sg"
   ingress {
@@ -74,11 +69,26 @@ resource "aws_iam_instance_profile" "iam_instance_profile" {
   role = aws_iam_role.ssm_iam_role.name
 }
 
+data "aws_ami" "ubuntu" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["099720109477"] # Canonical
+}
+
 resource "aws_instance" "web_server" {
-  ami                    = "ami-030770b178fa9d374" # Amazon Linux? # aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[0].[Value]' --output tex
+  ami                    = data.aws_ami.ubuntu.id # "ami-030770b178fa9d374" # Amazon Linux? # aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[0].[Value]' --output tex
   instance_type          = "t3.micro"
-  # key_name = local.ssh_key_name
-  # vpc_security_group_ids = [aws_security_group.web_server_sg.id]
+  vpc_security_group_ids = [aws_security_group.web_server_sg.id]
 
   user_data = <<-EOF
               #!/bin/bash
