@@ -25,36 +25,22 @@ provider "aws" {
 #   public_key = var.SSH_PUBLIC_KEY
 # }
 
-# resource "aws_security_group" "web_server_sg" {
-#   name = "terraform_web_server_sg"
-#   ingress {
-#     from_port   = local.server_port
-#     to_port     = local.server_port
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-# }
+resource "aws_security_group" "web_server_sg" {
+  name = "terraform_web_server_sg"
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-
-# resource "aws_iam_role_policy" "test_policy" {
-#   name = "test_policy2"
-#   role = aws_iam_role.ssm_iam_role.id
-
-#   # Terraform's "jsonencode" function converts a
-#   # Terraform expression result to valid JSON syntax.
-#   policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Action = [
-#           "ec2:Describe*",
-#         ]
-#         Effect   = "Allow"
-#         Resource = "*"
-#       },
-#     ]
-#   })
-# }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
 
 resource "aws_iam_role" "ssm_iam_role" {
   name = "ssm_iam_role"
@@ -111,22 +97,10 @@ output "ec2_id" {
   value = aws_instance.web_server.id  
 }
 
-# output "ec2_state" {
-#   value = aws_instance.web_server.instance_state  
-# }
+output "ec2_state" {
+  value = aws_instance.web_server.instance_state  
+}
 
-# resource "aws_iam_service_linked_role" "sessionmanager" {
-#   aws_service_name = "ssm.amazonaws.com"
-# }
-
-# output "example_ip" {
-#   value = aws_instance.web_server.public_ip
-# }
-
-# output "example_id" {
-#   value = aws_instance.web_server.id
-# }
-
-# output "example_dns" {
-#   value = aws_instance.web_server.public_dns
-# }
+output "example_dns" {
+  value = aws_instance.web_server.public_dns
+}
