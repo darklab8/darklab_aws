@@ -2,3 +2,5 @@
 *.tfstate*
 .terraform/
 awscookbook/
+venv/
+__pycache__/
