@@ -20,41 +20,41 @@ provider "aws" {
   secret_key = var.AWS_SECRET_ACCESS_KEY
 }
 
-resource "aws_key_pair" "example" {
-  key_name   = local.ssh_key_name
-  public_key = var.SSH_PUBLIC_KEY
-}
+# resource "aws_key_pair" "example" {
+#   key_name   = local.ssh_key_name
+#   public_key = var.SSH_PUBLIC_KEY
+# }
 
-resource "aws_security_group" "web_server_sg" {
-  name = "terraform_web_server_sg"
-  ingress {
-    from_port   = local.server_port
-    to_port     = local.server_port
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
+# resource "aws_security_group" "web_server_sg" {
+#   name = "terraform_web_server_sg"
+#   ingress {
+#     from_port   = local.server_port
+#     to_port     = local.server_port
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+# }
 
 
-resource "aws_iam_role_policy" "test_policy" {
-  name = "test_policy2"
-  role = aws_iam_role.ssm_iam_role.id
+# resource "aws_iam_role_policy" "test_policy" {
+#   name = "test_policy2"
+#   role = aws_iam_role.ssm_iam_role.id
 
-  # Terraform's "jsonencode" function converts a
-  # Terraform expression result to valid JSON syntax.
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "ec2:Describe*",
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-    ]
-  })
-}
+#   # Terraform's "jsonencode" function converts a
+#   # Terraform expression result to valid JSON syntax.
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = [
+#           "ec2:Describe*",
+#         ]
+#         Effect   = "Allow"
+#         Resource = "*"
+#       },
+#     ]
+#   })
+# }
 
 resource "aws_iam_role" "ssm_iam_role" {
   name = "ssm_iam_role"
@@ -89,10 +89,10 @@ resource "aws_iam_instance_profile" "iam_instance_profile" {
 }
 
 resource "aws_instance" "web_server" {
-  ami                    = "ami-030770b178fa9d374" # Amazon Linux? # Previously data.aws_ami.ubuntu.id
+  ami                    = "ami-030770b178fa9d374" # Amazon Linux? # aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[0].[Value]' --output tex
   instance_type          = "t3.micro"
-  key_name = local.ssh_key_name
-  vpc_security_group_ids = [aws_security_group.web_server_sg.id]
+  # key_name = local.ssh_key_name
+  # vpc_security_group_ids = [aws_security_group.web_server_sg.id]
 
   user_data = <<-EOF
               #!/bin/bash
@@ -111,6 +111,22 @@ output "ec2_id" {
   value = aws_instance.web_server.id  
 }
 
-output "ec2_state" {
-  value = aws_instance.web_server.instance_state  
-}
+# output "ec2_state" {
+#   value = aws_instance.web_server.instance_state  
+# }
+
+# resource "aws_iam_service_linked_role" "sessionmanager" {
+#   aws_service_name = "ssm.amazonaws.com"
+# }
+
+# output "example_ip" {
+#   value = aws_instance.web_server.public_ip
+# }
+
+# output "example_id" {
+#   value = aws_instance.web_server.id
+# }
+
+# output "example_dns" {
+#   value = aws_instance.web_server.public_dns
+# }
