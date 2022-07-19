@@ -86,7 +86,7 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_instance" "web_server" {
-  ami                    = data.aws_ami.ubuntu.id # "ami-030770b178fa9d374" # Amazon Linux? # aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[0].[Value]' --output tex
+  ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t3.micro"
   vpc_security_group_ids = [aws_security_group.web_server_sg.id]
 
