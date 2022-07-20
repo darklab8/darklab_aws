@@ -44,7 +44,7 @@ class InputData:
     aws_user_id: str
     aws_region: str
     action: str
-    aws_docker_registry: str = "aws-cookbook-repo"
+    aws_docker_registry: str = "example"
     docker_tag: str = "latest"
     image_buildname: str = "nginx:latest"
 
@@ -97,6 +97,11 @@ class ActionExecutor:
                 cls._shell(
                     f"aws ecr get-login-password | docker login --username AWS"
                     f" --password-stdin {input_.aws_user_id}.dkr.ecr.{input_.aws_region}.amazonaws.com"
+                )
+            case "push":
+                cls._shell(
+                    f"docker push {input_.aws_user_id}.dkr.ecr.{input_.aws_region}"
+                    f".amazonaws.com/{input_.aws_docker_registry}:{input_.docker_tag}"
                 )
             
 if __name__=="__main__":
