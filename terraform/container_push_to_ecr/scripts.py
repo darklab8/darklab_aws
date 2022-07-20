@@ -43,7 +43,6 @@ class CliReader:
 class InputData:
     aws_user_id: str
     aws_region: str
-    aws_username: str
     action: str
     aws_docker_registry: str = "aws-cookbook-repo"
     docker_tag: str = "latest"
@@ -61,7 +60,6 @@ class InputData:
         return SimpleNamespace(
             aws_user_id=os.environ["TF_VAR_AWS_USER_ID"],
             aws_region=os.environ["TF_VAR_AWS_REGION"],
-            aws_username=os.environ["TF_VAR_AWS_USERNAME"],
         )
 
     @classmethod
