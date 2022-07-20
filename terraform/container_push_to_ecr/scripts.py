@@ -103,6 +103,10 @@ class ActionExecutor:
                     f"docker push {input_.aws_user_id}.dkr.ecr.{input_.aws_region}"
                     f".amazonaws.com/{input_.aws_docker_registry}:{input_.docker_tag}"
                 )
+            case "list":
+                cls._shell(
+                    f"aws ecr list-images --repository-name {input_.aws_docker_registry}"
+                )
             
 if __name__=="__main__":
     input_ = InputData.get_input_data()
