@@ -44,32 +44,35 @@ class InputData:
     aws_user_id: str
     action: str
 
-    @staticmethod
-    def get_cli() -> dict:
+    @classmethod
+    def _get_cli_vars(cls) -> dict:
         args = CliReader().read_group().get_data()
+        return SimpleNamespace(
+            action=args.action
+        )
 
-        return {
-            "action": args.action
-        }
-
-    @staticmethod
-    def get_env() -> dict:
-        return {
-            "aws_user_id": os.environ["TF_VAR_AWS_USER_ID"]
-        }
+    @classmethod
+    def _get_env_vars(cls):
+        return SimpleNamespace(
+            aws_user_id=os.environ["TF_VAR_AWS_USER_ID"]
+        )
 
     @classmethod
     def get_input_data(cls) -> 'InputData':
-        return InputData(
-            **(cls.get_cli()),
-            **(cls.get_env()),
+        
+        env_vars = cls._get_env_vars()
+        cli_vars = cls._get_cli_vars()
+        instance = InputData(
+            aws_user_id=env_vars.aws_user_id,
+            action=cli_vars.action,
         )
+        return instance
 
 class ActionExecutor:
     logger = init_logger()
 
     @classmethod
-    def shell(cls, cmd):
+    def _shell(cls, cmd):
         return_code = os.system(cmd)
         cls.logger.debug(f"return_code={return_code}, cmd={cmd}")
         if return_code != 0:
@@ -79,14 +82,12 @@ class ActionExecutor:
     def handle_actions(cls, input_: InputData):
         match input_.action:
             case "build":
-                cls.shell("docker pull nginx:latest")
+                cls._shell("docker pull nginx:latest")
             case "tag":
-                cls.shell(
+                cls._shell(
                     f"docker tag {input_.aws_user_id}.dkr.ecr.$AWS_REGION.amazonaws.com/aws-cookbook-repo:latest"
                 )
             
-
-
 if __name__=="__main__":
     input_ = InputData.get_input_data()
     ActionExecutor().handle_actions(input_)
