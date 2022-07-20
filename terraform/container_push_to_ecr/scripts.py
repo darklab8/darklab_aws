@@ -42,19 +42,26 @@ class CliReader:
 @dataclass
 class InputData:
     aws_user_id: str
+    aws_region: str
+    aws_username: str
     action: str
+    aws_docker_registry: str = "aws-cookbook-repo"
+    docker_tag: str = "latest"
+    image_buildname: str = "nginx:latest"
 
     @classmethod
     def _get_cli_vars(cls) -> dict:
         args = CliReader().read_group().get_data()
         return SimpleNamespace(
-            action=args.action
+            action=args.action,
         )
 
     @classmethod
     def _get_env_vars(cls):
         return SimpleNamespace(
-            aws_user_id=os.environ["TF_VAR_AWS_USER_ID"]
+            aws_user_id=os.environ["TF_VAR_AWS_USER_ID"],
+            aws_region=os.environ["TF_VAR_AWS_REGION"],
+            aws_username=os.environ["TF_VAR_AWS_USERNAME"],
         )
 
     @classmethod
@@ -82,10 +89,16 @@ class ActionExecutor:
     def handle_actions(cls, input_: InputData):
         match input_.action:
             case "build":
-                cls._shell("docker pull nginx:latest")
+                cls._shell(f"docker pull {input_.image_buildname}")
             case "tag":
                 cls._shell(
-                    f"docker tag {input_.aws_user_id}.dkr.ecr.$AWS_REGION.amazonaws.com/aws-cookbook-repo:latest"
+                    f"docker tag {input_.image_buildname} {input_.aws_user_id}.dkr.ecr.{input_.aws_region}"
+                    f".amazonaws.com/{input_.aws_docker_registry}:{input_.docker_tag}"
+                )
+            case "auth":
+                cls._shell(
+                    f"aws ecr get-login-password | docker login --username AWS"
+                    f" --password-stdin {input_.aws_user_id}.dkr.ecr.{input_.aws_region}.amazonaws.com"
                 )
             
 if __name__=="__main__":
