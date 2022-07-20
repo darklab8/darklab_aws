@@ -4,7 +4,7 @@ from botocore.exceptions import ClientError
 import os
 import argparse
 from dataclasses import dataclass
-
+import botocore
 
 def upload_file(file_name, bucket, object_name=None):
     """Upload a file to an S3 bucket
@@ -22,7 +22,7 @@ def upload_file(file_name, bucket, object_name=None):
     # Upload the file
     s3_client = boto3.client('s3')
     try:
-        response = s3_client.upload_file(file_name, bucket, object_name)
+        response = s3_client.upload_file(file_name, bucket, object_name, ExtraArgs={'ContentType': 'text/html'})
     except ClientError as e:
         logging.error(e)
         return False
@@ -50,5 +50,10 @@ def get_input() -> S3UploadInfo:
     )
 
 if __name__=="__main__":
-    input_ = get_input()
+    # input_ = get_input()
+    input_ = S3UploadInfo(
+        filename_source="index.html",
+        bucketname="terraform-20220720003745314000000001",
+        filename_target="index.html",
+    )
     upload_file(input_.filename_source, input_.bucketname, input_.filename_target)

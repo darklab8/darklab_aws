@@ -27,10 +27,10 @@ resource "aws_s3_bucket" "example" {
   }
 }
 
-resource "aws_s3_bucket_acl" "example" {
-  bucket = aws_s3_bucket.example.id
-  acl    = "public-read"
-}
+# resource "aws_s3_bucket_acl" "example" {
+#   bucket = aws_s3_bucket.example.id
+#   acl    = "public-read"
+# }
 
 resource "aws_s3_bucket_website_configuration" "example" {
   bucket = aws_s3_bucket.example.bucket
@@ -66,6 +66,14 @@ data "aws_iam_policy_document" "allow_access_from_another_account" {
       aws_s3_bucket.example.arn,
       "${aws_s3_bucket.example.arn}/*",
     ]
+  }
+}
+
+resource "aws_s3_bucket_ownership_controls" "example" {
+  bucket = aws_s3_bucket.example.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
   }
 }
 
