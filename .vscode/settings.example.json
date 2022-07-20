@@ -1,0 +1,9 @@
+{
+  "terminal.integrated.env.linux": {
+    "TF_VAR_AWS_ACCESS_KEY_ID": "example",
+    "TF_VAR_AWS_SECRET_ACCESS_KEY": "example",
+    "TF_VAR_SSH_PUBLIC_KEY": "example",
+    "TF_VAR_AWS_REGION": "example",
+    "TF_VAR_AWS_USER_ID": "example"
+  }
+}

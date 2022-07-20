@@ -4,3 +4,5 @@
 awscookbook/
 venv/
 __pycache__/
+settings.json
+spam.log
