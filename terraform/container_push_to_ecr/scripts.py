@@ -28,8 +28,9 @@ class CliReader:
     def __init__(self):
         self._parser = argparse.ArgumentParser()
 
-    def add_argument(self, *args, **kwargs):
-        return self._parser.add_argument(*args, **kwargs)
+    def add_argument(self, *args, **kwargs) -> 'CliReader':
+        self._parser.add_argument(*args, **kwargs)
+        return self
 
     def get_data(self) -> SimpleNamespace:
         return self._parser.parse_args()
@@ -38,8 +39,12 @@ class CliReader:
         self._parser.add_argument('action', type=str, help='positional argument to choose action')
         return self # chain for easy data access
 
+    def ignore_others(self) -> 'CliReader':
+        self._parser.add_argument('args', nargs=argparse.REMAINDER)
+        return self # chain for easy data access
 
-@dataclass
+
+@dataclass(frozen=True, kw_only=True)
 class InputData:
     aws_user_id: str
     aws_region: str
@@ -47,26 +52,28 @@ class InputData:
     aws_docker_registry: str = "example"
     docker_tag: str = "latest"
     image_buildname: str = "nginx:latest"
+    parser: CliReader = CliReader()
 
-    @classmethod
-    def _get_cli_vars(cls) -> dict:
-        args = CliReader().read_group().get_data()
+class InputDataFactory:
+    def __init__(self):
+        self._parser = CliReader()
+
+    def get_cli_vars(self) -> SimpleNamespace:
+        args = self._parser.read_group().ignore_others().get_data()
         return SimpleNamespace(
             action=args.action,
         )
 
-    @classmethod
-    def _get_env_vars(cls):
+    def _get_env_vars(self) -> SimpleNamespace:
         return SimpleNamespace(
             aws_user_id=os.environ["TF_VAR_AWS_USER_ID"],
             aws_region=os.environ["TF_VAR_AWS_REGION"],
         )
 
-    @classmethod
-    def get_input_data(cls) -> 'InputData':
+    def get_input_data(self) -> 'InputData':
         
-        env_vars = cls._get_env_vars()
-        cli_vars = cls._get_cli_vars()
+        env_vars = self._get_env_vars()
+        cli_vars = self.get_cli_vars()
         instance = InputData(
             **(env_vars.__dict__),
             **(cli_vars.__dict__),
@@ -86,6 +93,10 @@ class ActionExecutor:
     @classmethod
     def handle_actions(cls, input_: InputData):
         match input_.action:
+            case "example":
+                # Example how to read additional arguments                
+                args = input_.parser.read_group().add_argument("--argument", type=int, default=456).get_data()
+                cls._shell(f"echo {args.argument}")
             case "build":
                 cls._shell(f"docker pull {input_.image_buildname}")
             case "tag":
@@ -109,7 +120,7 @@ class ActionExecutor:
                 )
             
 if __name__=="__main__":
-    input_ = InputData.get_input_data()
+    input_ = InputDataFactory().get_input_data()
     ActionExecutor().handle_actions(input_)
 
 class TestStuff(unittest.TestCase):
