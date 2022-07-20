@@ -2,6 +2,8 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 import os
+import argparse
+from dataclasses import dataclass
 
 
 def upload_file(file_name, bucket, object_name=None):
@@ -26,5 +28,27 @@ def upload_file(file_name, bucket, object_name=None):
         return False
     return True
 
+@dataclass
+class S3UploadInfo:
+    filename_source: str
+    filename_target: str
+    bucketname: str
+
+
+def get_input() -> S3UploadInfo:
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('source', type=str)
+    parser.add_argument('target', type=str)
+    parser.add_argument('bucket', type=str)
+
+    args = parser.parse_args()
+
+    return S3UploadInfo(
+        filename_target=args.target,
+        filename_source=args.source,
+        bucketname=args.bucket,
+    )
+
 if __name__=="__main__":
-    upload_file("test.html", "terraform-20220719221548054800000001")
+    input_ = get_input()
+    upload_file(input_.filename_source, input_.bucketname, input_.filename_target)
