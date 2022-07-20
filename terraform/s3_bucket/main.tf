@@ -27,11 +27,6 @@ resource "aws_s3_bucket" "example" {
   }
 }
 
-# resource "aws_s3_bucket_acl" "example" {
-#   bucket = aws_s3_bucket.example.id
-#   acl    = "public-read"
-# }
-
 resource "aws_s3_bucket_website_configuration" "example" {
   bucket = aws_s3_bucket.example.bucket
 
