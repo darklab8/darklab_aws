@@ -63,8 +63,8 @@ class InputData:
         env_vars = cls._get_env_vars()
         cli_vars = cls._get_cli_vars()
         instance = InputData(
-            aws_user_id=env_vars.aws_user_id,
-            action=cli_vars.action,
+            **(env_vars.__dict__),
+            **(cli_vars.__dict__),
         )
         return instance
 
