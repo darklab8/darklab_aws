@@ -51,14 +51,15 @@ resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
 
 data "aws_iam_policy_document" "allow_access_from_another_account" {
   statement {
+    sid = "PublicReadGetObject"
+
     principals {
-      type        = "AWS"
-      identifiers = ["123456789012"]
+      type        = "*"
+      identifiers = ["*"]
     }
 
     actions = [
       "s3:GetObject",
-      "s3:ListBucket",
     ]
 
     resources = [
@@ -74,4 +75,12 @@ output "bucket_name" {
 
 output "bucket_domain_name" {
   value = aws_s3_bucket.example.bucket_domain_name
+}
+
+output "webhost_domain" {
+  value = aws_s3_bucket_website_configuration.example.website_domain 
+}
+
+output "website" {
+  value = "http://${aws_s3_bucket.example.bucket}.${aws_s3_bucket_website_configuration.example.website_domain}"
 }

@@ -37,9 +37,9 @@ class S3UploadInfo:
 
 def get_input() -> S3UploadInfo:
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('source', type=str)
-    parser.add_argument('target', type=str)
-    parser.add_argument('bucket', type=str)
+    parser.add_argument('--source', type=str)
+    parser.add_argument('--target', type=str)
+    parser.add_argument('--bucket', type=str)
 
     args = parser.parse_args()
 
