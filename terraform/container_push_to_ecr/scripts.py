@@ -11,6 +11,7 @@ from utils import (
     AbstractInputDataFactory,
     AbstractActionSwitcher,
     AbstractInputData,
+    Scripts,
 )
 
 @dataclass(frozen=True, kw_only=True)
@@ -77,7 +78,11 @@ class ActionSwitcher(AbstractActionSwitcher):
                 cls._shell(
                     f"aws ecr list-images --repository-name {input_.aws_docker_registry}"
                 )
-            
+
 if __name__=="__main__":
-    input_: InputData = InputDataFactory(model=InputData, actions=Actions).get_input_data()
-    ActionSwitcher().handle_actions(input_)
+    Scripts(
+        model=InputData,
+        action_switcher=ActionSwitcher,
+        actions=Actions,
+        input_data_factory=InputDataFactory,
+    ).run()

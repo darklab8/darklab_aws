@@ -243,3 +243,20 @@ class AbstractActionSwitcher(ShellMixin, metaclass=abc.ABCMeta):
 class AbstractInputData:
     action: str
     cli_reader: CliReader
+
+class Scripts:
+    def __init__(
+        self,
+        model: AbstractInputData,
+        action_switcher: AbstractActionSwitcher,
+        actions: AbstractActions,
+        input_data_factory: AbstractInputDataFactory
+    ):
+        self.model = model
+        self.action_switcher = action_switcher
+        self.actions = actions
+        self.input_data_factory = input_data_factory
+
+    def run(self):
+        input_: AbstractInputData = self.input_data_factory(model=self.model, actions=self.actions).get_input_data()
+        self.action_switcher.handle_actions(input_)
