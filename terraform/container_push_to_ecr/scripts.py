@@ -1,7 +1,7 @@
 
 from types import SimpleNamespace
 
-import utils
+import darklab_utils as utils
 
 class InputDataFactory(utils.AbstractInputDataFactory):
 
