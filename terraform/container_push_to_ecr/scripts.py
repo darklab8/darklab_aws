@@ -8,11 +8,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 from utils import (
     EnumWithValuesAsStrings,
-    auto,
-    CliReader,
-    ShellMixin,
-    EnvReader,
-    get_logger,
+    enum_auto,
+    AbstractInputDataFactory,
+    AbstractActionSwitcher,
 )
 
 @dataclass(frozen=True, kw_only=True)
@@ -23,57 +21,32 @@ class InputData:
     aws_docker_registry: str
     docker_tag: str
     image_buildname: str
-    cli_reader: CliReader
+    cli_reader: None
 
 class Actions(EnumWithValuesAsStrings):
-    example = auto()
-    build = auto()
-    tag = auto()
-    auth = auto()
-    push = auto()
-    list = auto()
+    example = enum_auto()
+    build = enum_auto()
+    tag = enum_auto()
+    auth = enum_auto()
+    push = enum_auto()
+    list = enum_auto()
 
-class InputDataFactory:
-    model = InputData
+class InputDataFactory(AbstractInputDataFactory):
+    @staticmethod
+    def register_cli_arguments(cli_reader):
+        return cli_reader \
+        .add_argument("--aws_docker_registry", type=str, default="example") \
+        .add_argument("--docker_tag", type=str, default="latest") \
+        .add_argument("--image_buildname", type=str, default="nginx:latest")
 
-    def __init__(self):
-        self._cli_reader = CliReader() \
-            .add_argument(
-                'action',
-                type=str,
-                help='positional argument to choose action',
-                choices=Actions.get_keys(),
-            )
-        self._env_reader = EnvReader()
-
-    def _get_cli_vars(self) -> SimpleNamespace:
-        args = self._cli_reader \
-            .add_argument("--aws_docker_registry", type=str, default="example") \
-            .add_argument("--docker_tag", type=str, default="latest") \
-            .add_argument("--image_buildname", type=str, default="nginx:latest") \
-            .ignore_others().get_data()
-
-        data: dict = args.get_as_dict()
-        return SimpleNamespace(**data)
-
-    def _get_env_vars(self) -> SimpleNamespace:
+    @staticmethod
+    def register_env_arguments(env_reader) -> SimpleNamespace:
         return SimpleNamespace(
-            aws_user_id=self._env_reader["TF_VAR_AWS_USER_ID"],
-            aws_region=self._env_reader["TF_VAR_AWS_REGION"],
+            aws_user_id=env_reader["TF_VAR_AWS_USER_ID"],
+            aws_region=env_reader["TF_VAR_AWS_REGION"],
         )
 
-    def get_input_data(self):
-        
-        env_vars = self._get_env_vars()
-        cli_vars = self._get_cli_vars()
-        instance = self.model(
-            **(env_vars.__dict__),
-            **(cli_vars.__dict__),
-            cli_reader = self._cli_reader,
-        )
-        return instance
-
-class ActionExecutor(ShellMixin):
+class ActionSwitcher(AbstractActionSwitcher):
 
     @classmethod
     def handle_actions(cls, input_: InputData):
@@ -107,8 +80,8 @@ class ActionExecutor(ShellMixin):
                 )
             
 if __name__=="__main__":
-    input_: InputData = InputDataFactory().get_input_data()
-    ActionExecutor().handle_actions(input_)
+    input_: InputData = InputDataFactory(model=InputData, actions=Actions).get_input_data()
+    ActionSwitcher().handle_actions(input_)
 
 class TestStuff(unittest.TestCase):
 

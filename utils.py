@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from copy import copy
 import os
 import unittest
+import abc
 
 # ================================== EnumWithValuesAsStrings ==================================
 
@@ -23,9 +24,11 @@ class _EnumGetKey(Enum):
 class EnumWithValuesAsStrings(_EnumGetKey, metaclass=_EnumDirectValueMeta):
     pass
 
+enum_auto = auto
+
 class _EnumForTests(EnumWithValuesAsStrings):
-    example1 = auto()
-    example2 = auto()
+    example1 = enum_auto()
+    example2 = enum_auto()
 
 class TestEnum(unittest.TestCase):
     
@@ -185,3 +188,51 @@ class TestShellMixin(unittest.TestCase):
             _shell_execute("mkdir 1/2/3/6/5/7")
 
         self.assertTrue(isinstance(context.exception, ShellException))
+
+# ================================== InputDataFactory ==================================
+
+class AbstractInputDataFactory(abc.ABC):
+    def __init__(self, model, actions: EnumWithValuesAsStrings):
+        self.model = model
+        self._cli_reader = CliReader() \
+            .add_argument(
+                'action',
+                type=str,
+                help='positional argument to choose action',
+                choices=actions.get_keys(),
+            )
+        self._env_reader = EnvReader()
+
+    @abc.abstractstaticmethod
+    def register_cli_arguments(cli_reader: CliReader) -> CliReader:
+        pass
+
+    @abc.abstractstaticmethod
+    def register_env_arguments(env_reader: EnvReader) -> SimpleNamespace:
+        pass
+
+    def _get_cli_vars(self) -> SimpleNamespace:
+        args = self.register_cli_arguments(self._cli_reader) \
+            .ignore_others().get_data()
+        data: dict = args.get_as_dict()
+        return SimpleNamespace(**data)
+
+    def _get_env_vars(self) -> SimpleNamespace:
+        return self.register_env_arguments(self._env_reader)
+
+    def get_input_data(self):
+        
+        env_vars = self._get_env_vars()
+        cli_vars = self._get_cli_vars()
+        instance = self.model(
+            **(env_vars.__dict__),
+            **(cli_vars.__dict__),
+            cli_reader = self._cli_reader,
+        )
+        return instance
+
+class AbstractActionSwitcher(ShellMixin, metaclass=abc.ABCMeta):
+
+    @abc.abstractclassmethod
+    def handle_actions(cls, input_):
+        pass
