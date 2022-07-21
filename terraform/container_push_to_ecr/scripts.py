@@ -1,7 +1,6 @@
 
 from dataclasses import dataclass
 from types import SimpleNamespace
-import unittest
 
 import sys, os, inspect
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))))))
@@ -82,8 +81,3 @@ class ActionSwitcher(AbstractActionSwitcher):
 if __name__=="__main__":
     input_: InputData = InputDataFactory(model=InputData, actions=Actions).get_input_data()
     ActionSwitcher().handle_actions(input_)
-
-class TestStuff(unittest.TestCase):
-
-    def test_upper(self):
-        self.assertTrue(True)
