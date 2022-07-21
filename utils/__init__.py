@@ -196,8 +196,7 @@ class TestShellMixin(unittest.TestCase):
 # ================================== InputDataFactory ==================================
 
 class AbstractInputDataFactory(abc.ABC):
-    def __init__(self, model, registered_actions: list):
-        self.model = model
+    def __init__(self, registered_actions: list):
         self._cli_reader = CliReader() \
             .add_argument(
                 'action',
@@ -224,22 +223,16 @@ class AbstractInputDataFactory(abc.ABC):
     def _get_env_vars(self) -> SimpleNamespace:
         return self.register_env_arguments(self._env_reader)
 
-    def get_input_data(self) -> 'AbstractInputData':
+    def get_input_data(self) -> 'SimpleNamespace':
         
         env_vars = self._get_env_vars()
         cli_vars = self._get_cli_vars()
-        instance = self.model(
-            **(env_vars.__dict__),
-            **(cli_vars.__dict__),
+        instance = SimpleNamespace(
+            **env_vars.__dict__,
+            **cli_vars.__dict__,
             cli_reader = self._cli_reader,
         )
         return instance
-
-
-@dataclass(frozen=True, kw_only=True)
-class AbstractInputData:
-    action: str
-    cli_reader: CliReader
 
 
 def registered_action(f):
@@ -251,11 +244,7 @@ def registered_action(f):
 class AbstractScripts(ShellMixin):
     def __init__(
         self,
-        model: AbstractInputData,
-        input_data_factory: AbstractInputDataFactory
     ):
-        self.model = model
-        self.input_data_factory = input_data_factory
         self.registered_actions: list = [
             key for key, value in self.__class__.__dict__.items()
             if callable(value) and "registered_action" in value.__qualname__
@@ -263,7 +252,7 @@ class AbstractScripts(ShellMixin):
 
     def process(self):
         input_data_factory: AbstractInputDataFactory = self.input_data_factory
-        input_: AbstractInputData = input_data_factory(
-            model=self.model, registered_actions=self.registered_actions
+        input_: SimpleNamespace = input_data_factory(
+            registered_actions=self.registered_actions
         ).get_input_data()
         getattr(self, input_.action)(input_)
