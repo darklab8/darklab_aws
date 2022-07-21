@@ -2,13 +2,17 @@
 from dataclasses import dataclass
 from types import SimpleNamespace
 import unittest
+
+import sys, os, inspect
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))))))
+
 from utils import (
-    EnumGetKey,
-    EnumDirectValueMeta,
+    EnumWithValuesAsStrings,
     auto,
     CliReader,
     ShellMixin,
     EnvReader,
+    get_logger,
 )
 
 @dataclass(frozen=True, kw_only=True)
@@ -21,7 +25,7 @@ class InputData:
     image_buildname: str
     cli_reader: CliReader
 
-class Actions(EnumGetKey, metaclass=EnumDirectValueMeta):
+class Actions(EnumWithValuesAsStrings):
     example = auto()
     build = auto()
     tag = auto()
