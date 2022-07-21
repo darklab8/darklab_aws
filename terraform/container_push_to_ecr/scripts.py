@@ -2,16 +2,13 @@
 from dataclasses import dataclass
 from types import SimpleNamespace
 
-import sys, os, inspect
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))))))
-
 from utils import (
     AbstractActions,
     auto_action,
     AbstractInputDataFactory,
     AbstractActionSwitcher,
     AbstractInputData,
-    Scripts,
+    AbstractScripts,
 )
 
 @dataclass(frozen=True, kw_only=True)
@@ -80,7 +77,7 @@ class ActionSwitcher(AbstractActionSwitcher):
                 )
 
 if __name__=="__main__":
-    Scripts(
+    AbstractScripts(
         model=InputData,
         action_switcher=ActionSwitcher,
         actions=Actions,

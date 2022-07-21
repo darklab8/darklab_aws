@@ -2,7 +2,7 @@ import argparse
 import logging
 from enum import Enum, auto, EnumMeta
 from types import SimpleNamespace
-from copy import copy
+from copy import copy, deepcopy
 import os
 import unittest
 import abc
@@ -77,12 +77,12 @@ class _SimpleNameSpaceWithDict(SimpleNamespace):
         pass
 
 class ArgparseWithAugmentedArgs(argparse.ArgumentParser):
-    def parse_args(self, *args, **kwargs) -> _SimpleNameSpaceWithDict:
+    def parse_args(self, *args, ignore_args, **kwargs) -> _SimpleNameSpaceWithDict:
         args = super().parse_args(*args, **kwargs)
 
         def get_as_dict() -> dict:
             data = copy(args.__dict__)
-            if "args" in data:
+            if ignore_args and "args" in data:
                 data.pop("args")
             if "get_as_dict" in data:
                 data.pop("get_as_dict")
@@ -96,42 +96,45 @@ class CliReader:
         self._parser = ArgparseWithAugmentedArgs()
 
     def add_argument(self, *args, **kwargs) -> 'CliReader':
-        self._parser.add_argument(*args, **kwargs)
-        return self
+        copy_of_self = deepcopy(self)
+        copy_of_self._parser.add_argument(*args, **kwargs)
+        return copy_of_self
 
-    def get_data(self) -> _SimpleNameSpaceWithDict:
-        args = self._parser.parse_args()
+    def get_data(self, ignore_args=False) -> _SimpleNameSpaceWithDict:
+        args = self._parser.parse_args(ignore_args=ignore_args)
         return args
 
     def ignore_others(self) -> 'CliReader':
-        self._parser.add_argument('args', nargs=argparse.REMAINDER)
-        return self # chain for easy data access
+        copy_of_self = deepcopy(self)
+        copy_of_self._parser.add_argument('args', nargs=argparse.REMAINDER)
+        return copy_of_self # chain for easy data access
 
 class TestCliReader(unittest.TestCase):
 
     def setUp(self):
         self.instance = CliReader()
 
-    def _read_args(self, cmd):
-        return self.instance._parser.parse_args(cmd.split())
+    def _read_args(self, cli_reader, cmd):
+        return cli_reader._parser.parse_args(cmd.split(), ignore_args=False)
 
     def test_help(self):
-        self._read_args("")
+        self._read_args(self.instance,"")
 
     def test_register_and_read_arguments(self):
-        self.instance.add_argument("--argument", type=int)
-        args = self._read_args("--argument=123")
+        instance = self.instance
+        instance = instance.add_argument("--argument", type=int)
+        args = self._read_args(instance, "--argument=123")
         self.assertEqual(args.argument, 123)
 
     def test_ignore_unregistered(self):
         with self.assertRaises(SystemExit) as context:
-            args = self._read_args("--argument=123")
+            args = self._read_args(self.instance, "--argument=123")
 
         self.assertTrue(isinstance(context.exception, SystemExit))
     
     def test_get_data(self):
-        self.instance.add_argument("--argument", type=int)
-        args = self._read_args("--argument=123")
+        instance = self.instance.add_argument("--argument", type=int)
+        args = self._read_args(instance, "--argument=123")
 
         self.assertEqual(args.get_as_dict(), {'argument': 123})
 
@@ -175,7 +178,7 @@ def _shell_execute(cmd):
 
 class ShellMixin:
     @classmethod
-    def _shell(cls, cmd):
+    def shell(cls, cmd):
         _shell_execute(cmd)
         
 
@@ -193,14 +196,14 @@ class TestShellMixin(unittest.TestCase):
 # ================================== InputDataFactory ==================================
 
 class AbstractInputDataFactory(abc.ABC):
-    def __init__(self, model, actions: AbstractActions):
+    def __init__(self, model, registered_actions: list):
         self.model = model
         self._cli_reader = CliReader() \
             .add_argument(
                 'action',
                 type=str,
                 help='positional argument to choose action',
-                choices=actions.get_keys(),
+                choices=registered_actions
             )
         self._env_reader = EnvReader()
 
@@ -214,14 +217,14 @@ class AbstractInputDataFactory(abc.ABC):
 
     def _get_cli_vars(self) -> SimpleNamespace:
         args = self.register_cli_arguments(self._cli_reader) \
-            .ignore_others().get_data()
+            .ignore_others().get_data(ignore_args=True)
         data: dict = args.get_as_dict()
         return SimpleNamespace(**data)
 
     def _get_env_vars(self) -> SimpleNamespace:
         return self.register_env_arguments(self._env_reader)
 
-    def get_input_data(self):
+    def get_input_data(self) -> 'AbstractInputData':
         
         env_vars = self._get_env_vars()
         cli_vars = self._get_cli_vars()
@@ -232,31 +235,35 @@ class AbstractInputDataFactory(abc.ABC):
         )
         return instance
 
-class AbstractActionSwitcher(ShellMixin, metaclass=abc.ABCMeta):
-
-    @abc.abstractclassmethod
-    def handle_actions(cls, input_):
-        pass
-
 
 @dataclass(frozen=True, kw_only=True)
 class AbstractInputData:
     action: str
     cli_reader: CliReader
 
-class Scripts:
+
+def registered_action(f):
+    def wrapper(*args):
+        return f(*args)
+    return wrapper
+
+
+class AbstractScripts(ShellMixin):
     def __init__(
         self,
         model: AbstractInputData,
-        action_switcher: AbstractActionSwitcher,
-        actions: AbstractActions,
         input_data_factory: AbstractInputDataFactory
     ):
         self.model = model
-        self.action_switcher = action_switcher
-        self.actions = actions
         self.input_data_factory = input_data_factory
+        self.registered_actions: list = [
+            key for key, value in self.__class__.__dict__.items()
+            if callable(value) and "registered_action" in value.__qualname__
+        ]
 
-    def run(self):
-        input_: AbstractInputData = self.input_data_factory(model=self.model, actions=self.actions).get_input_data()
-        self.action_switcher.handle_actions(input_)
+    def process(self):
+        input_data_factory: AbstractInputDataFactory = self.input_data_factory
+        input_: AbstractInputData = input_data_factory(
+            model=self.model, registered_actions=self.registered_actions
+        ).get_input_data()
+        getattr(self, input_.action)(input_)
