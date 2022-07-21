@@ -1,2 +1,1 @@
--i https://test.pypi.org/simple/
 darklab-utils==0.0.1.dev1
