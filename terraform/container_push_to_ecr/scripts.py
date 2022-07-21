@@ -6,29 +6,29 @@ import sys, os, inspect
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))))))
 
 from utils import (
-    EnumWithValuesAsStrings,
-    enum_auto,
+    AbstractActions,
+    auto_action,
     AbstractInputDataFactory,
     AbstractActionSwitcher,
+    AbstractInputData,
 )
 
 @dataclass(frozen=True, kw_only=True)
-class InputData:
+class InputData(AbstractInputData):
     aws_user_id: str
     aws_region: str
-    action: str
     aws_docker_registry: str
     docker_tag: str
     image_buildname: str
-    cli_reader: None
+    
 
-class Actions(EnumWithValuesAsStrings):
-    example = enum_auto()
-    build = enum_auto()
-    tag = enum_auto()
-    auth = enum_auto()
-    push = enum_auto()
-    list = enum_auto()
+class Actions(AbstractActions):
+    example = auto_action()
+    build = auto_action()
+    tag = auto_action()
+    auth = auto_action()
+    push = auto_action()
+    list = auto_action()
 
 class InputDataFactory(AbstractInputDataFactory):
     @staticmethod

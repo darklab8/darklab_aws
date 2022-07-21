@@ -6,6 +6,7 @@ from copy import copy
 import os
 import unittest
 import abc
+from dataclasses import dataclass
 
 # ================================== EnumWithValuesAsStrings ==================================
 
@@ -21,14 +22,14 @@ class _EnumGetKey(Enum):
     def get_keys(cls):
         return [e.name for e in cls]
 
-class EnumWithValuesAsStrings(_EnumGetKey, metaclass=_EnumDirectValueMeta):
+class AbstractActions(_EnumGetKey, metaclass=_EnumDirectValueMeta):
     pass
 
-enum_auto = auto
+auto_action = auto
 
-class _EnumForTests(EnumWithValuesAsStrings):
-    example1 = enum_auto()
-    example2 = enum_auto()
+class _EnumForTests(AbstractActions):
+    example1 = auto_action()
+    example2 = auto_action()
 
 class TestEnum(unittest.TestCase):
     
@@ -192,7 +193,7 @@ class TestShellMixin(unittest.TestCase):
 # ================================== InputDataFactory ==================================
 
 class AbstractInputDataFactory(abc.ABC):
-    def __init__(self, model, actions: EnumWithValuesAsStrings):
+    def __init__(self, model, actions: AbstractActions):
         self.model = model
         self._cli_reader = CliReader() \
             .add_argument(
@@ -236,3 +237,9 @@ class AbstractActionSwitcher(ShellMixin, metaclass=abc.ABCMeta):
     @abc.abstractclassmethod
     def handle_actions(cls, input_):
         pass
+
+
+@dataclass(frozen=True, kw_only=True)
+class AbstractInputData:
+    action: str
+    cli_reader: CliReader
