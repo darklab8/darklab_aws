@@ -48,18 +48,13 @@ def get_logger()-> logging.Logger:
     # create logger with 'spam_application'
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
-    # create file handler which logs even debug messages
-    fh = logging.FileHandler('spam.log')
-    fh.setLevel(logging.DEBUG)
     # create console handler with a higher log level
     ch = logging.StreamHandler()
     ch.setLevel(logging.ERROR)
     # create formatter and add it to the handlers
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
     ch.setFormatter(formatter)
     # add the handlers to the logger
-    logger.addHandler(fh)
     logger.addHandler(ch)
     return logger
 
@@ -91,11 +86,11 @@ class ArgparseWithAugmentedArgs(argparse.ArgumentParser):
         args.get_as_dict = get_as_dict
         return args
 
-class CliReader:
+class ArgparseReader:
     def __init__(self):
         self._parser = ArgparseWithAugmentedArgs()
 
-    def add_argument(self, *args, **kwargs) -> 'CliReader':
+    def add_argument(self, *args, **kwargs) -> 'ArgparseReader':
         copy_of_self = deepcopy(self)
         copy_of_self._parser.add_argument(*args, **kwargs)
         return copy_of_self
@@ -104,7 +99,7 @@ class CliReader:
         args = self._parser.parse_args(ignore_args=ignore_args)
         return args
 
-    def ignore_others(self) -> 'CliReader':
+    def ignore_others(self) -> 'ArgparseReader':
         copy_of_self = deepcopy(self)
         copy_of_self._parser.add_argument('args', nargs=argparse.REMAINDER)
         return copy_of_self # chain for easy data access
@@ -112,7 +107,7 @@ class CliReader:
 class TestCliReader(unittest.TestCase):
 
     def setUp(self):
-        self.instance = CliReader()
+        self.instance = ArgparseReader()
 
     def _read_args(self, cli_reader, cmd):
         return cli_reader._parser.parse_args(cmd.split(), ignore_args=False)
@@ -141,11 +136,24 @@ class TestCliReader(unittest.TestCase):
 # ================================== EnvReader ==================================
 
 class EnvReader:
-    def __getitem__(self, key):
+    def __init__(self):
+        self._storage = SimpleNamespace()
+
+    def __getitem__(self, key) -> str:
         return os.environ[key]
 
-    def get(self, key, default = None):
+    def get(self, key, default = None) -> str:
         return os.environ.get(key, default)
+
+    def add_arguments(self, **kwargs) -> 'EnvReader':
+        self = deepcopy(self)
+        for key, value in kwargs.items():
+            setattr(self._storage, key, value)
+        return self
+
+    def get_storage(self) -> 'SimpleNamespace':
+        return self._storage
+
 
 class TestEnvReader(unittest.TestCase):
     
@@ -171,15 +179,19 @@ class TestEnvReader(unittest.TestCase):
 class ShellException(Exception):
     pass
 
-def _shell_execute(cmd):
+def _shell_execute(cmd, show_cmd=True):
+
+    if show_cmd:
+        print(f"$ {cmd}")
+    
     return_code = os.system(cmd)
     if return_code != 0:
         raise ShellException(f"return code is not zero for command: {cmd}")
 
 class ShellMixin:
     @classmethod
-    def shell(cls, cmd):
-        _shell_execute(cmd)
+    def shell(cls, cmd, show_cmd=True):
+        _shell_execute(cmd, show_cmd=print)
         
 
 class TestShellMixin(unittest.TestCase):
@@ -197,7 +209,7 @@ class TestShellMixin(unittest.TestCase):
 
 class AbstractInputDataFactory(abc.ABC):
     def __init__(self, registered_actions: list):
-        self._cli_reader = CliReader() \
+        self._argpase_reader = ArgparseReader() \
             .add_argument(
                 'action',
                 type=str,
@@ -207,21 +219,21 @@ class AbstractInputDataFactory(abc.ABC):
         self._env_reader = EnvReader()
 
     @abc.abstractstaticmethod
-    def register_cli_arguments(cli_reader: CliReader) -> CliReader:
+    def register_cli_arguments(cli_reader: ArgparseReader) -> ArgparseReader:
         pass
 
     @abc.abstractstaticmethod
-    def register_env_arguments(env_reader: EnvReader) -> SimpleNamespace:
+    def register_env_arguments(env_reader: EnvReader) -> EnvReader:
         pass
 
     def _get_cli_vars(self) -> SimpleNamespace:
-        args = self.register_cli_arguments(self._cli_reader) \
+        args = self.register_cli_arguments(self._argpase_reader) \
             .ignore_others().get_data(ignore_args=True)
         data: dict = args.get_as_dict()
         return SimpleNamespace(**data)
 
     def _get_env_vars(self) -> SimpleNamespace:
-        return self.register_env_arguments(self._env_reader)
+        return self.register_env_arguments(self._env_reader).get_storage()
 
     def get_input_data(self) -> 'SimpleNamespace':
         
@@ -230,7 +242,7 @@ class AbstractInputDataFactory(abc.ABC):
         instance = SimpleNamespace(
             **env_vars.__dict__,
             **cli_vars.__dict__,
-            cli_reader = self._cli_reader,
+            cli_reader = self._argpase_reader,
         )
         return instance
 
