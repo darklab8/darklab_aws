@@ -6,10 +6,12 @@ Repository to learn all kind of AWS stuff.
 
 # Notes to try
 
+- [X] [Find a book about AWS or roadmap](https://www.amazon.com/AWS-Cookbook-Recipes-Success/dp/1492092606)
 - [X] Also, figure out session manager, then never expose SSH to the internet again
-- [x] Deploying containers with Amazon Lightsail
+- [X] Deploying containers with Amazon Lightsail
 - [X] S3!
 - [X] What is IAM?
+- [X] [Billing](https://calculator.aws/#/addService) + Costs for traffic at least
 - [ ] Security
 - [ ] VPC + Subnets
 - [ ] Working with RDS
@@ -21,12 +23,10 @@ Repository to learn all kind of AWS stuff.
 - [ ] Working with SQS? 🤔 (+SNS?)
 - [ ] Auto scaling group ?
 - [ ] Cloudwatch with cron job for automatic stop/enables?
-- [ ] Find a book about AWS or roadmap
 - [ ] Load balancer?
 - [ ] Route 53?
 - [ ] Secret Manager
 - [ ] Options Manager?
-- [ ] Billing
 - [ ] AWS Cloud Trail - a tool for architect to debug infra
 
 # Tips:
